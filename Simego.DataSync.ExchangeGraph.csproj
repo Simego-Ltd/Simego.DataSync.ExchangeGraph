@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup Condition="'$(BuildForNetCore)' == 'true'">
+    <TargetFrameworks>net48;net8-windows</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(BuildForNetCore)' != 'true'">
+    <TargetFrameworks>net48</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyTitle>Simego.DataSync.ExchangeGraph</AssemblyTitle>
+    <Product>Simego.DataSync.ExchangeGraph</Product>
+    <Copyright>Copyright © Simego 2025</Copyright>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Platforms>AnyCPU;ARM64</Platforms>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='net48'">
+    <Reference Include="System.Design" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Simego.DataSync.Core">
+      <HintPath>C:\Program Files\Simego\Data Synchronisation Studio 6.0\Simego.DataSync.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Simego.DataSync.OAuth2">
+      <HintPath>C:\Program Files\Simego\Data Synchronisation Studio 6.0\Simego.DataSync.OAuth2.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="ConnectionInterface.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="ConnectionInterface.Designer.cs">
+      <DependentUpon>ConnectionInterface.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="ConnectionInterface.resx">
+      <DependentUpon>ConnectionInterface.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+</Project>

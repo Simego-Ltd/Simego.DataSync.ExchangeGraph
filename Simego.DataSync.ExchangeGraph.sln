@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36429.23 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simego.DataSync.ExchangeGraph", "Simego.DataSync.ExchangeGraph.csproj", "{F45BF407-9F7A-3EF3-B24C-158A67AA5E5E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|ARM64 = Debug|ARM64
+		Release|Any CPU = Release|Any CPU
+		Release|ARM64 = Release|ARM64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F45BF407-9F7A-3EF3-B24C-158A67AA5E5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F45BF407-9F7A-3EF3-B24C-158A67AA5E5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F45BF407-9F7A-3EF3-B24C-158A67AA5E5E}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{F45BF407-9F7A-3EF3-B24C-158A67AA5E5E}.Debug|ARM64.Build.0 = Debug|ARM64
+		{F45BF407-9F7A-3EF3-B24C-158A67AA5E5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F45BF407-9F7A-3EF3-B24C-158A67AA5E5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F45BF407-9F7A-3EF3-B24C-158A67AA5E5E}.Release|ARM64.ActiveCfg = Release|ARM64
+		{F45BF407-9F7A-3EF3-B24C-158A67AA5E5E}.Release|ARM64.Build.0 = Release|ARM64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8A769BB9-F01D-457A-97FE-47348E939BFD}
+	EndGlobalSection
+EndGlobal
