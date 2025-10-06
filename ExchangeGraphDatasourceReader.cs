@@ -37,8 +37,7 @@ namespace Simego.DataSync.ExchangeGraph
         [Description("Email address of messages to return from Mailbox.")]
         public string SenderEmail { get; set; }
 
-        [Browsable(false)]
-        public string ClientSecret { get; set; }
+        internal string ClientSecret { get; set; }
         
         public override DataTableStore GetDataTable(DataTableStore dt)
         {
@@ -111,25 +110,33 @@ namespace Simego.DataSync.ExchangeGraph
             //Load the Provider Settings from the Project File.
             foreach (ProviderParameter p in parameters)
             {
-                if (p.Name == nameof(TenantId))
+                switch (p.Name)
                 {
-                    TenantId = p.Value;
-                }
-                if (p.Name == nameof(ClientId))
-                {
-                    ClientId = p.Value;
-                }
-                if (p.Name == nameof(ClientSecret))
-                {
-                    ClientSecret = SecurityService.DecyptValue(p.Value);
-                }
-                if (p.Name == nameof(UserPrincipalName))
-                {
-                    UserPrincipalName = p.Value;
-                }
-                if (p.Name == nameof(SenderEmail))
-                {
-                    SenderEmail = p.Value;
+                    case nameof(TenantId):
+                        {
+                            TenantId = p.Value;
+                            break;
+                        }
+                    case nameof(ClientId):
+                        {
+                            ClientId = p.Value;
+                            break;
+                        }
+                    case nameof(ClientSecret):
+                        {
+                            ClientSecret = SecurityService.DecyptValue(p.Value);
+                            break;
+                        }
+                    case nameof(UserPrincipalName):
+                        {
+                            UserPrincipalName = p.Value;
+                            break;
+                        }
+                    case nameof(SenderEmail):
+                        {
+                            SenderEmail = p.Value;
+                            break;
+                        }
                 }
             }
         }
