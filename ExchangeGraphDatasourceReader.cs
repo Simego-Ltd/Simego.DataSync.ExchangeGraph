@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace Simego.DataSync.ExchangeGraph
 {
-    [ProviderInfo(Name = "Exchange Graph API Connector", Description = "Connect to Exchange Mailbox via Graph API")]
+    [ProviderInfo(Name = "Exchange Graph API Connector", Description = "Connect to Exchange Mailbox via Graph API", Group = "Microsoft Exchange")]
     public class ExchangeGraphDatasourceReader : DataReaderOAuth2ProviderBase, IDataSourceSetup
     {
         private const string ODATA_NEXT_LINK = "@odata.nextLink";
