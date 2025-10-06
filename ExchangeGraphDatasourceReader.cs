@@ -12,82 +12,75 @@ using System.Windows.Forms;
 namespace Simego.DataSync.ExchangeGraph
 {
     [ProviderInfo(Name = "Exchange Graph API Connector", Description = "Connect to Exchange Mailbox via Graph API")]
-    public class ExchangeGraphDatasourceReader : DataReaderOAuth2ProviderBase, IDataSourceSetup, IOAuthWebConnection
+    public class ExchangeGraphDatasourceReader : DataReaderOAuth2ProviderBase, IDataSourceSetup
     {
+        private const string ODATA_NEXT_LINK = "@odata.nextLink";
+        private const string ODATA_COLUMNS = "id,internetMessageId,subject,receivedDateTime";
+
         private ConnectionInterface _connectionIf;
+        private OAuthWebConnectionWrapper _oAuthWebConnectionWrapper = new OAuthWebConnectionWrapper();
+
+        private string _accessToken;
+        private DateTime _tokenExpires;
 
         [Category("Authentication")]
-        public string TenantId { get; set; } 
-        
+        public string TenantId { get; set; }
+
         [Category("Authentication")]
-        public string ClientId { get; set; } 
+        public string ClientId { get; set; }
 
         [Category("Settings")]
         [Description("User Mailbox to read mail from.")]
-        public string UserPrincipalName { get; set; } 
-        
+        public string UserPrincipalName { get; set; }
+
         [Category("Settings")]
         [Description("Email address of messages to return from Mailbox.")]
-        public string SenderEmail { get; set; } 
+        public string SenderEmail { get; set; }
 
         [Browsable(false)]
-        public string ClientSecret { get; set; } 
-
-        private string AccessToken { get; set; }
-        private DateTime TokenExpires { get; set; }
-
+        public string ClientSecret { get; set; }
+        
         public override DataTableStore GetDataTable(DataTableStore dt)
         {
             dt.AddIdentifierColumn(typeof(string));
-            
+
             var mapping = new DataSchemaMapping(SchemaMap, Side);
-            var includedColumns = SchemaMap.GetIncludedColumns();
-            var abort = false;
-
-            // Get an Access Token
-            BeginOAuthAuthorize(this);
-
-            // Setup Web Request Helper
-            var helper = new HttpWebRequestHelper();
+            var columns = SchemaMap.GetIncludedColumns();
             
-            helper.SetAuthorizationHeader(AccessToken);
-        
-            var url = $"https://graph.microsoft.com/v1.0/users/{UserPrincipalName}/messages?$filter=from/emailAddress/address eq '{SenderEmail}'&$select=id,internetMessageId,subject,receivedDateTime";
+            // Setup Web Request Helper
+            var helper = GetRequestHelper();
+           
+            var url = $"https://graph.microsoft.com/v1.0/users/{UserPrincipalName}/messages?$filter=from/emailAddress/address eq '{SenderEmail}'&$select={ODATA_COLUMNS}";
 
             do
             {
                 var response = helper.GetRequestAsJson(url);
-
-                foreach (var item_row in response["value"])
+                
+                if (response["value"] != null)
                 {
-                    if (dt.Rows.AddWithIdentifier(mapping, includedColumns,
-                            (item, columnName) =>
-                            {
-                                return item_row[columnName] == null ? null : item_row[columnName].ToObject<object>();
-                            }, item_row["id"].ToObject<string>()) == DataTableStore.ABORT)
+                    foreach (var item_row in response["value"])
                     {
-                        abort = true;
-                        return dt;
+                        if (dt.Rows.AddWithIdentifier(mapping, columns,
+                                (item, columnName) =>
+                                {
+                                    return item_row[columnName] == null ? null : item_row[columnName].ToObject<object>();
+                                }, item_row["id"].ToObject<string>()) == DataTableStore.ABORT)
+                        {
+                            return dt;
+                        }
                     }
                 }
 
-                if (response["@odata.nextLink"] != null)
-                {
-                    url = response["@odata.nextLink"].ToObject<string>();
-                }
-                else
-                {
-                    url = null;
-                }
+                url = response[ODATA_NEXT_LINK]?.ToObject<string>();
 
-            } while (!abort && url != null);
+            } while (url != null);
 
             return dt;
         }
-       
+
         public override DataSchema GetDefaultDataSchema()
         {
-            //Return the Data source default Schema.
+            // Return the Data source default Schema.
 
             var schema = new DataSchema();
 
@@ -95,7 +88,7 @@ namespace Simego.DataSync.ExchangeGraph
             schema.Map.Add(new DataSchemaItem("internetMessageId", typeof(string), false, false, false, -1));
             schema.Map.Add(new DataSchemaItem("subject", typeof(string), false, false, true, -1));
             schema.Map.Add(new DataSchemaItem("receivedDateTime", typeof(DateTime), false, false, false, -1));
-  
+
             return schema;
 
         }
@@ -117,8 +110,8 @@ namespace Simego.DataSync.ExchangeGraph
         {
             //Load the Provider Settings from the Project File.
             foreach (ProviderParameter p in parameters)
-            {           
-                if(p.Name == nameof(TenantId))
+            {
+                if (p.Name == nameof(TenantId))
                 {
                     TenantId = p.Value;
                 }
@@ -142,8 +135,6 @@ namespace Simego.DataSync.ExchangeGraph
         }
 
         public override IDataSourceWriter GetWriter() => new NullWriterDataSourceProvider { SchemaMap = SchemaMap };
-
-        #region IDataSourceSetup - Render Custom Configuration UI
         
         public void DisplayConfigurationUI(IntPtr parent)
         {
@@ -164,8 +155,28 @@ namespace Simego.DataSync.ExchangeGraph
         }
 
         public bool Validate() => true;
-        
+
         public IDataSourceReader GetReader() => this;
+                
+        public override string GetFileName(DataCompareItem item, int index) => $"{item.GetSourceIdentifier<string>()}.eml";
+
+        public override string GetFilePath(DataCompareItem item, int index) => string.Empty;
+
+        public override string GetBlobTempFile(DataCompareItem item, int index)
+        {
+            var helper = GetRequestHelper();
+            var id = item.GetSourceIdentifier<string>();
+            var fileName = FileCache.GetTempFileName();
+            
+            using (var fs = File.Create(fileName))
+            {
+                var stream = helper.OpenReadStream($"https://graph.microsoft.com/v1.0/users/{UserPrincipalName}/messages/{id}/$value");
+
+                stream.CopyTo(fs);
+            }
+
+            return fileName;
+        }
 
         public override OAuthConfiguration GetOAuthConfiguration()
         {
@@ -177,52 +188,26 @@ namespace Simego.DataSync.ExchangeGraph
                 GrantType = "client_credentials",
                 Scope = "https://graph.microsoft.com/.default",
 
-                AccessToken = AccessToken,
-                TokenExpires = TokenExpires
+                AccessToken = _accessToken,
+                TokenExpires = _tokenExpires
             };
         }
 
         public override void UpdateOAuthConfiguration(OAuthConfiguration configuration)
         {
-            AccessToken = configuration.AccessToken;
-            TokenExpires = configuration.TokenExpires;
+            _accessToken = configuration.AccessToken;
+            _tokenExpires = configuration.TokenExpires;
         }
 
-        public bool ShowDialog(string url) => false;
-
-        public void CloseMe()
+        private HttpWebRequestHelper GetRequestHelper()
         {
-            
-        }
+            // Get an Access Token
+            BeginOAuthAuthorize(_oAuthWebConnectionWrapper);
 
-        public void CancelMe()
-        {
-            
-        }
-
-        #endregion
-
-        public override string GetFileName(DataCompareItem item, int index) => $"{item.GetSourceIdentifier<string>()}.eml";
-
-        public override string GetFilePath(DataCompareItem item, int index) => string.Empty;
-
-        public override string GetBlobTempFile(DataCompareItem item, int index)
-        {
-            var id = item.GetSourceIdentifier<string>();
-            var fileName = FileCache.GetTempFileName();
-            
             var helper = new HttpWebRequestHelper();
-            
-            helper.SetAuthorizationHeader(AccessToken);
-
-            using (var fs = File.Create(fileName))
-            {
-                var stream = helper.OpenReadStream($"https://graph.microsoft.com/v1.0/users/{UserPrincipalName}/messages/{id}/$value");
-
-                stream.CopyTo(fs);
-            }
-
-            return fileName;
+            helper.SetAuthorizationHeader(_accessToken);
+            return helper;
         }
+
     }
 }
