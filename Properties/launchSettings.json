@@ -1,9 +1,14 @@
 {
-   "profiles": {
-  "Simego.DataSync.ExchangeGraph": {
-       "commandName": "Executable",
+  "profiles": {
+    "Simego.DataSync.ExchangeGraph": {
+      "commandName": "Executable",
       "executablePath": "C:\\Program Files\\Simego\\Data Synchronisation Studio 6.0\\Simego.DataSync.Studio.exe",
-       "commandLineArgs": "-debug"
-       }
-   }
+      "commandLineArgs": "-debug"
+    },
+    "Simego.DataSync.ExchangeGraph.Arm64": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Simego\\Data Synchronisation Studio 6.0 (Arm64)\\Simego.DataSync.Studio.exe",
+      "commandLineArgs": "-debug"
+    }
+  }
 }
